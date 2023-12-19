@@ -38,9 +38,7 @@ def main():
     main_watcher()
 
 def getLastGameLogs():
-    global FTP_USER
-    global FTP_PASSWD
-    global FTP_SERVER
+    logs_directory = '/home/steam/Steam/steamapps/common/Half-Life/tfc/logs/' # Set the path to your local logs directory
 
     if os.path.exists('prevlog.json'):
         with open('prevlog.json', 'r') as f:
@@ -48,43 +46,39 @@ def getLastGameLogs():
     else:
         prevlog = []
 
-    ftp = FTP(FTP_SERVER, user=FTP_USER, passwd=FTP_PASSWD)
-    ftp.cwd('/tfc/logs')
-    logFiles = ftp.nlst('-t') # get list of logs by time
-    logFiles.reverse() # sort descending
+    # Get list of log files sorted by modification time in descending order
+    logFiles = sorted(
+        [f for f in os.listdir(logs_directory) if f.endswith('.log')],
+        key=lambda x: os.path.getmtime(os.path.join(logs_directory, x)),
+        reverse=True
+    )
 
     firstLog = None
     secondLog = None
     for logFile in logFiles:
-        if ".log" not in logFile:
-            continue
-
+        logFilePath = os.path.join(logs_directory, logFile)
         if 'logFiles' in prevlog and logFile in prevlog['logFiles']:
             print("already parsed the latest log")
             return
 
-        # check the size, should be >100kB
-        if int(ftp.size(logFile)) > 100000:
-            logModified = datetime.strptime(ftp.voidcmd("MDTM %s" % logFile).split()[-1], '%Y%m%d%H%M%S')
+        # Check the size, should be >100kB
+        if os.path.getsize(logFilePath) > 100000:
+            logModified = datetime.fromtimestamp(os.path.getmtime(logFilePath))
             if firstLog is None:
                 firstLog = (logFile, logModified)
                 continue
 
-            # otherwise, verify that there was another round played at least <60 minutes within the last found log
+            # Verify that there was another round played at least <60 minutes within the last found log
             if (firstLog[1] - logModified).total_seconds() < 3600:
                 secondLog = (logFile, logModified)
-
-            # if secondLog is not populated, this is probably the first pickup of the day; abort
             break
 
-    # abort if we didn't find a log
+    # Abort if we didn't find a log
     if firstLog is None or secondLog is None:
         return
 
-    ftp.retrbinary("RETR %s" % firstLog[0], open('logs/%s' % firstLog[0], 'wb').write)
-    ftp.retrbinary("RETR %s" % secondLog[0], open('logs/%s' % secondLog[0], 'wb').write)
-
-    hampalyze = 'curl -X POST -F logs[]=@%s -F logs[]=@%s http://app.hampalyzer.com/api/parseGame' % ('logs/'+secondLog[0], 'logs/'+firstLog[0])
+    # Assuming hampalyze API still needs the files to be sent
+    hampalyze = 'curl -X POST -F logs[]=@%s -F logs[]=@%s http://app.hampalyzer.com/api/parseGame' % (os.path.join(logs_directory, secondLog[0]), os.path.join(logs_directory, firstLog[0]))
     output = os.popen(hampalyze).read()
     print(output)
 
@@ -149,3 +143,4 @@ class InhouseServerProtocol:
 
 if __name__ == "__main__":
     main()
+
