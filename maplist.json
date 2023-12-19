@@ -1,6 +1,6 @@
 {
     "tier1": [
-        "demolish",
+        "fry_baked_lg",
         "phantom_lg",
         "raiden8",
         "schtop",
@@ -8,43 +8,28 @@
         "stowaway2_lg"
     ],
     "tier2": [
-        "2kfort5_lg",
-        "2mesa3_lg",
         "alchimy_lg",
-        "fry_baked_lg",
-        "monkey_lg",
-        "mortality_lg",
+        "demolish",
+        "entomb_b10",
         "openfire_lowgrens",
-        "opposition3",
-        "piggies",
-        "prolifique_r",
         "siden_lg",
         "siege",
-        "voltage_lg"
+        "stormz2_lg"
     ],
     "tier3": [
+        "2kfort5_lg",
+        "2mesa3_lg",
         "ameliorate",
-        "bases2k3",
-        "bf_ssb",
-        "ceasefire",
-        "chemflow",
-        "chimkey_lg",
-        "crossover2",
-        "hammer2",
-        "mastodon",
-        "mulch_trench_lg",
+        "cranked",
+        "datchurch",
+        "monkey_lg",
+        "mortality_lg",
         "nyx_rb2",
-        "oppose2k1_lowgrens",
+        "opposition3",
         "orbit_l3",
-        "roasted_lg",
-        "sigma_lowgrens",
-        "ss_shortcut",
-        "stormz2_lg",
-        "torch2",
-        "turbo",
+        "serenity_r",
         "turbowave_b1",
-        "waterwar",
-        "well2023_b2",
-        "welldown_b7"
+        "voltage_lg",
+        "waterwar"
     ]
 }
