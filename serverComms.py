@@ -144,3 +144,23 @@ class InhouseServerProtocol:
 if __name__ == "__main__":
     main()
 
+async def periodic_task():
+    while True:
+        getLastGameLogs()  # Call your function
+        await asyncio.sleep(3600)  # Wait for 1 hour (3600 seconds) before next execution
+
+def main_watcher():
+    loop = asyncio.get_event_loop()
+    coro = start_udp_listener()
+    transport, _ = loop.run_until_complete(coro)
+    
+    # Schedule the periodic task
+    loop.create_task(periodic_task())
+
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        transport.close()
+        loop.close()

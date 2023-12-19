@@ -502,8 +502,7 @@ async def lockmap(ctx):
             RecordMapAndTeams(winningMap)
 
             await ctx.send("The winning map is: " + winningMap)
-            await ctx.send("🎉🎉 JOIN INHOUSE YA HOSERS 🎉🎉")
-            await ctx.send("steam://connect/104.153.105.235:27015/" + SERVER_PASSWORD)
+            await ctx.send("steam://connect/" + SERVER_IP + ":27015/" + SERVER_PASSWORD)
             await DePopulatePickup(ctx)
 
 @client.command(pass_context=True)
@@ -591,11 +590,11 @@ async def forcestats(ctx):
 
 @client.command(pass_context=True)
 async def hltv(ctx):
-    await ctx.send("HLTV: http://inhouse.site.nfoservers.com/HLTV/akw/")
+    await ctx.send("HLTV: Not yet implemented - stay tuned!")
 
 @client.command(pass_context=True)
 async def logs(ctx):
-    await ctx.send("Logs: http://inhouse.site.nfoservers.com/akw/")
+    await ctx.send("Logs: http://" + SERVER_IP + "/")
 
 @client.command(pass_context=True)
 async def tfcmap(ctx, map):
@@ -610,86 +609,52 @@ async def tfcmap(ctx, map):
 
 @client.command(pass_context=True)
 async def server(ctx):
-    await ctx.send("steam://connect/104.153.105.235:27015/%s" % SERVER_PASSWORD)
-
-@client.command(pass_context=True)
-async def teamz(ctx):
-    await ctx.send("```\nPlayers (8/8)\nnuki, nuki, nuki, nuki, nuki, nuki, nuki, nuki```")
-
-@client.command(pass_context=True)
-async def packup(ctx):
-    await ctx.send("Where's that fucking Hampster?  I swear I'm gonna pack that rodent up... 🐹")
+    await ctx.send("steam://connect/" + SERVER_IP + ":27015/%s" % SERVER_PASSWORD)
 
 @client.command(pass_context=True)
 async def doug(ctx):
     await ctx.send("Doug was a semi-professional Team Fortress Classic Player between 2000 and 2007 achieving co-leading The Cereal Killers to holding all three major league titles at the same time. Doug left gaming for almost a decade and now he's back, streaming old Team Fortress Classic and Fortnite games.")
 
 @client.command(pass_context=True)
-async def akw(ctx):
-    await ctx.send("akw likes butts 🍑")
+async def charliemiddies(ctx):
+    await ctx.send("https://www.youtube.com/watch?v=CiG_uEiGwlA")
 
 @client.command(pass_context=True)
-async def hamp(ctx):
-    await ctx.send("https://streamable.com/0328u")
+async def yuki(ctx):
+    await ctx.send("https://streamable.com/2mh4qa")
 
 @client.command(pass_context=True)
-async def nuki(ctx):
-    await ctx.send("https://clips.twitch.tv/PoorRefinedTurnipFreakinStinkin")
+async def vampz(ctx):
+    await ctx.send("https://www.youtube.com/watch?v=c-ToUNQ0RTo")
 
 @client.command(pass_context=True)
-async def repair(ctx):
-    await ctx.send("https://www.twitch.tv/davjs/clip/ViscousPuzzledKoupreySmoocherZ")
+async def sorrykerm(ctx):
+    await ctx.send("https://www.youtube.com/watch?v=iGcN4MzPONE")
 
 @client.command(pass_context=True)
-async def country(ctx):
-    await ctx.send("http://hampalyzer.com/country-trolls-hump2.mp4")
+async def jolly(ctx):
+    await ctx.send("https://youtu.be/0_RHmgklCxg?t=8")
 
 @client.command(pass_context=True)
-async def neon(ctx):
-    await ctx.send("https://clips.twitch.tv/VenomousCrepuscularJuicePeanutButterJellyTime")
+async def marshy(ctx):
+    await ctx.send("https://clips.twitch.tv/UgliestCrispyPigeonBudBlast-JGuHNz-AfUtNgrNT")
 
 @client.command(pass_context=True)
-async def proonz(ctx):
-    await ctx.send("https://streamable.com/xugb7r")
-
-@client.command(pass_context=True)
-async def masz(ctx):
-    await ctx.send("https://www.twitch.tv/neonlight_tfc/clip/BoldEnthusiasticFerretKevinTurtle-Wz33i-BA34JDjxVp")
-
-@client.command(pass_context=True)
-async def swk(ctx):
-    await ctx.send("https://streamable.com/ut068u")
-
-@client.command(pass_context=True)
-async def seagals(ctx):
-    clips = [
-        "https://streamable.com/mt9hjy",
-        "https://streamable.com/7ko1hh",
-        "https://streamable.com/m0cmzf",
-        "https://clips.twitch.tv/VictoriousConsiderateMosquitoHeyGirl-L8XUHMzJWHPWgTnY"
-    ]
-
-    await ctx.send(random.choice(clips))
-
-@client.command(pass_context=True)
-async def angel(ctx):
-    await ctx.send("https://www.twitch.tv/nugki/clip/BlindingPatientPotPeteZaroll")
-
-@client.command(pass_context=True)
-async def ja(ctx):
-    await ctx.send("https://www.twitch.tv/bananahampster/clip/DependableSpineyTruffleBIRB")
-
-@client.command(pass_context=True)
-async def kix(ctx):
-    await ctx.send("https://www.twitch.tv/r0flz/clip/UglyGrotesqueCattlePraiseIt")
+async def charlie(ctx):
+    await ctx.send("https://www.youtube.com/watch?v=8FM3evhnHxc")
 
 @client.command(pass_context=True)
 async def help(ctx):
     await ctx.send("pickup: !pickup !add !remove !teams !lockmap !cancel")
     await ctx.send("info: !stats !timeleft !hltv !logs !tfcmap !server")
     await ctx.send("admin: !playernumber !kick !lockset !forcestats !vote")
-    await ctx.send("fun: !hamp !teamz !packup !doug !akw !nuki !neon !swk !ja")
-    await ctx.send("fun: !repair !country !proonz !angel !masz !seagals (1/4) !kix")
+    await ctx.send("fun: !yuki !doug !charliemiddies !sorrykerm !vampz")
+    await ctx.send("fun: !jolly !marshy !charlie")
+
+@client.command(pass_context=True)
+async def clips(ctx):
+    await ctx.send("fun: !yuki !doug !charliemiddies !sorrykerm !vampz")
+    await ctx.send("fun: !jolly !marshy !charlie")
 
 @client.event
 async def on_ready():
