@@ -31,7 +31,7 @@ CLIENT_PORT = os.getenv('CLIENT_PORT') # port to communicate with client plugin 
 # on load, load previous teams + map from the prev* files
 if os.path.exists('prevmaps.json'):
     with open('prevmaps.json', 'r') as f:
-        previousMaps = deque(json.load(f), maxlen=5)
+        previousMaps = deque(json.load(f), maxlen=7)
 else:
     previousMaps = []
 
@@ -590,11 +590,11 @@ async def forcestats(ctx):
 
 @client.command(pass_context=True)
 async def hltv(ctx):
-    await ctx.send("HLTV: Not yet implemented - stay tuned!")
+    await ctx.send("HLTV: http://inhouse.site.nfoservers.com/HLTV/akw/")
 
 @client.command(pass_context=True)
 async def logs(ctx):
-    await ctx.send("Logs: http://" + SERVER_IP + "/")
+    await ctx.send("Logs: http://inhouse.site.nfoservers.com/akw/")
 
 @client.command(pass_context=True)
 async def tfcmap(ctx, map):
@@ -607,54 +607,57 @@ async def tfcmap(ctx, map):
         else:
             await ctx.send("Didn't find specified map. [All known maps are here](http://mrclan.com/tfcmaps/).")
 
+### sd3mon created the below (with ChatGPT help) to list/search available maps
+# Function to get the map list
+def get_map_list(directory):
+    return [file for file in os.listdir(directory) if file.endswith('.bsp')]
+
+# Directory containing the maps
+maps_directory = '/home/steam/Steam/steamapps/common/Half-Life/tfc/maps'
+map_list = get_map_list(maps_directory)
+
+# Write the map list to a JSON file
+with open('map_list.json', 'w') as f:
+    json.dump(map_list, f)
+
+# Command to display the map list
+@client.command(pass_context=True)
+async def listmaps(ctx):
+    try:
+        with open('map_list.json', 'r') as f:
+            maps = json.load(f)
+            maps.sort()
+        map_list_str = '\n'.join(maps)
+        await ctx.send(f"Available Maps:\n{map_list_str}")
+    except FileNotFoundError:
+        await ctx.send("Map list file not found. Please ensure the map list is generated.")
+
+# Command to search for a specific map
+@client.command(pass_context=True)
+async def mapsearch(ctx, map_name):
+    try:
+        with open('map_list.json', 'r') as f:
+            maps = json.load(f)
+        map_name = map_name.lower() + ".bsp"
+        if map_name in maps:
+            await ctx.send(f"Found map: {map_name}")
+        else:
+            await ctx.send("Didn't find specified map.")
+    except FileNotFoundError:
+        await ctx.send("Map list file not found. Please ensure the map list is generated.")
+
+### End sd3mon input
+
 @client.command(pass_context=True)
 async def server(ctx):
     await ctx.send("steam://connect/" + SERVER_IP + ":27015/%s" % SERVER_PASSWORD)
 
 @client.command(pass_context=True)
-async def doug(ctx):
-    await ctx.send("Doug was a semi-professional Team Fortress Classic Player between 2000 and 2007 achieving co-leading The Cereal Killers to holding all three major league titles at the same time. Doug left gaming for almost a decade and now he's back, streaming old Team Fortress Classic and Fortnite games.")
-
-@client.command(pass_context=True)
-async def charliemiddies(ctx):
-    await ctx.send("https://www.youtube.com/watch?v=CiG_uEiGwlA")
-
-@client.command(pass_context=True)
-async def yuki(ctx):
-    await ctx.send("https://streamable.com/2mh4qa")
-
-@client.command(pass_context=True)
-async def vampz(ctx):
-    await ctx.send("https://www.youtube.com/watch?v=c-ToUNQ0RTo")
-
-@client.command(pass_context=True)
-async def sorrykerm(ctx):
-    await ctx.send("https://www.youtube.com/watch?v=iGcN4MzPONE")
-
-@client.command(pass_context=True)
-async def jolly(ctx):
-    await ctx.send("https://youtu.be/0_RHmgklCxg?t=8")
-
-@client.command(pass_context=True)
-async def marshy(ctx):
-    await ctx.send("https://clips.twitch.tv/UgliestCrispyPigeonBudBlast-JGuHNz-AfUtNgrNT")
-
-@client.command(pass_context=True)
-async def charlie(ctx):
-    await ctx.send("https://www.youtube.com/watch?v=8FM3evhnHxc")
-
-@client.command(pass_context=True)
 async def help(ctx):
     await ctx.send("pickup: !pickup !add !remove !teams !lockmap !cancel")
     await ctx.send("info: !stats !timeleft !hltv !logs !tfcmap !server")
+    await ctx.send("tfc server info: !listmaps !mapsearch <name>")
     await ctx.send("admin: !playernumber !kick !lockset !forcestats !vote")
-    await ctx.send("fun: !yuki !doug !charliemiddies !sorrykerm !vampz")
-    await ctx.send("fun: !jolly !marshy !charlie")
-
-@client.command(pass_context=True)
-async def clips(ctx):
-    await ctx.send("fun: !yuki !doug !charliemiddies !sorrykerm !vampz")
-    await ctx.send("fun: !jolly !marshy !charlie")
 
 @client.event
 async def on_ready():
