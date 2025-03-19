@@ -9,6 +9,9 @@ import random
 import re
 import socket
 import urllib.request
+import requests
+import subprocess
+import aiohttp
 
 from collections import deque
 from dotenv import load_dotenv
@@ -21,11 +24,17 @@ intents.message_content = True
 client = commands.Bot(command_prefix = ["!", "+", "-"], help_command=None, case_insensitive=True, intents=intents)
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-CHANNEL_NAME = os.getenv('DISCORD_CHANNEL')
-SERVER_IP = os.getenv('SERVER_IP')
-SERVER_PORT = os.getenv('SERVER_PORT') # port to communicate with server plugin
-SERVER_PASSWORD = os.getenv('SERVER_PASSWORD')
+DISCORD_TOKEN="removed"
+TOKEN = DISCORD_TOKEN
+#TOKEN = os.getenv('DISCORD_TOKEN')
+#CHANNEL_NAME = os.getenv('DISCORD_CHANNEL')
+CHANNEL_NAME = 'pugs'
+#SERVER_IP = os.getenv('SERVER_IP')
+SERVER_IP = "45.77.239.85"
+#SERVER_PORT = os.getenv('SERVER_PORT') # port to communicate with server plugin
+SERVER_PORT = "27015"
+#SERVER_PASSWORD = os.getenv('SERVER_PASSWORD')
+SERVER_PASSWORD = "4v4"
 CLIENT_PORT = os.getenv('CLIENT_PORT') # port to communicate with client plugin listener (serverComms.py)
 
 # on load, load previous teams + map from the prev* files
@@ -201,7 +210,7 @@ async def pickup(ctx):
     global recentlyPlayedMapsMsg
     global nextCancelConfirms
 
-    if pickupStarted == False and pickupActive == False and mapVote == False and ctx.channel.name == CHANNEL_NAME:
+    if pickupStarted == False and pickupActive == False and mapVote == False:
         with open('maplist.json') as f:
             mapList = json.load(f)
             for prevMap in previousMaps:
@@ -215,11 +224,9 @@ async def pickup(ctx):
         nextCancelConfirms = False
         recentlyPlayedMapsMsg = "Maps %s were recently played and are removed from voting." % ", ".join(previousMaps)
 
-        await ctx.send("Pickup started. !add in 10 seconds")
+        await ctx.send("Pickup started. !add in 3 seconds")
         await updateNick(ctx, "starting...")
-        await asyncio.sleep(5)
-        await ctx.send("!add in 5 seconds")
-        await asyncio.sleep(5)
+        await asyncio.sleep(3)
 
         if pickupStarted == True:
             pickupActive = True
@@ -254,9 +261,6 @@ async def cancel(ctx):
 @client.command(pass_context=True)
 async def playernumber(ctx, numPlayers: int):
     global playerNumber
-
-    if ctx.channel.name != CHANNEL_NAME:
-        return
 
     try:
         players = int(numPlayers)
@@ -337,7 +341,7 @@ async def add(ctx):
 
     player = ctx.author
 
-    if pickupActive == True and ctx.channel.name == CHANNEL_NAME:
+    if pickupActive == True:
         playerId = player.id
         playerName = player.display_name
         if playerId not in playerList:
@@ -398,13 +402,13 @@ async def remove(ctx):
     global playerList
     global pickupActive
 
-    if pickupActive == True and ctx.channel.name == CHANNEL_NAME:
+    if pickupActive == True :
         if ctx.author.id in playerList:
             del playerList[ctx.author.id]
             await printPlayerList(ctx)
 
 @client.command(pass_context=True)
-@commands.has_role('admin')
+@commands.has_role('badmin')
 async def kick(ctx, player: discord.User):
     global playerList
 
@@ -415,9 +419,6 @@ async def kick(ctx, player: discord.User):
 
 @client.command(pass_context=True)
 async def teams(ctx):
-    if ctx.channel.name != CHANNEL_NAME:
-        return
-
     if pickupStarted == False:
         await ctx.send("No pickup active.")
     else:
@@ -450,9 +451,6 @@ async def lockmap(ctx):
     global previousMaps
     global recentlyPlayedMapsMsg
     global nextCancelConfirms
-
-    if ctx.channel.name != CHANNEL_NAME:
-        return
 
     rankedVotes = []
     highestVote = 0
@@ -511,7 +509,7 @@ async def vote(ctx):
     global playerList
     global mapChoices
 
-    if mapVote == True and ctx.channel.name == CHANNEL_NAME:
+    if mapVote == True:
         playersVoted = [playerId for mapChoice in mapChoices for playerId in mapChoice.votes]
         playersAbstained = [playerId for playerId in playerList.keys() if playerId not in playersVoted]
 
@@ -543,9 +541,6 @@ async def lockset(ctx, mapToLockset):
 
 @client.command(pass_context=True)
 async def timeleft(ctx):
-    if ctx.channel.name != CHANNEL_NAME:
-        return
-
     # construct a UDP packet and send it to the server
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.sendto("BOT_MSG@TIMELEFT@".encode(), (SERVER_IP, int(SERVER_PORT)))
@@ -588,80 +583,307 @@ async def forcestats(ctx):
             prevlog = json.load(f)
             await ctx.send('Stats: %s' % prevlog['site'])
 
-@client.command(pass_context=True)
-async def hltv(ctx):
-    await ctx.send("HLTV: http://inhouse.site.nfoservers.com/HLTV/akw/")
+log_directory = "/home/steam/Steam/steamapps/common/Half-Life/tfc/logs/"
+previous_files = set()
+
+def find_recent_large_logs(log_directory, num_logs=2, min_size_kb=50):
+    log_files = [os.path.join(log_directory, file) for file in os.listdir(log_directory) if file.endswith('.log')]
+    log_files = [file for file in log_files if os.path.getsize(file) > min_size_kb * 1024]
+    log_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+    return log_files[:num_logs]
 
 @client.command(pass_context=True)
-async def logs(ctx):
-    await ctx.send("Logs: http://inhouse.site.nfoservers.com/akw/")
+async def oldlogs(ctx):
+    global previous_files
 
-@client.command(pass_context=True)
-async def tfcmap(ctx, map):
-    map = map.lower()
-    with urllib.request.urlopen(r"http://mrclan.com/tfcmaps/") as mapIndex:
-        response = mapIndex.read().decode("utf-8")
-        matches = re.findall('<a href="/tfcmaps/%s.zip' % (map), response, re.I)
-        if len(matches) != 0:
-            await ctx.send("Found map: http://mrclan.com/tfcmaps/%s.zip" % (map))
-        else:
-            await ctx.send("Didn't find specified map. [All known maps are here](http://mrclan.com/tfcmaps/).")
+    await ctx.send("Fetching logs, please wait...")
+    recent_logs = find_recent_large_logs(log_directory)
 
-### sd3mon created the below (with ChatGPT help) to list/search available maps
-# Function to get the map list
-def get_map_list(directory):
-    return [file for file in os.listdir(directory) if file.endswith('.bsp')]
+    current_files = set(os.listdir(log_directory))
+    previous_files = current_files
 
-# Directory containing the maps
-maps_directory = '/home/steam/Steam/steamapps/common/Half-Life/tfc/maps'
-map_list = get_map_list(maps_directory)
+    if len(recent_logs) >= 2:
+        logToParse1 = recent_logs[0]
+        logToParse2 = recent_logs[1]
 
-# Write the map list to a JSON file
-with open('map_list.json', 'w') as f:
-    json.dump(map_list, f)
+        # First API call (Hampalyzer)
+        hampalyzer_command = [
+            'curl', '-X', 'POST',
+            '-F', 'force=on',
+            '-F', f'logs[]=@{logToParse1}',
+            '-F', f'logs[]=@{logToParse2}',
+            'http://app.hampalyzer.com/api/parseGame'
+        ]
 
-# Command to display the map list
-@client.command(pass_context=True)
-async def listmaps(ctx):
-    try:
-        with open('map_list.json', 'r') as f:
-            maps = json.load(f)
-            maps.sort()
-        map_list_str = '\n'.join(maps)
-        await ctx.send(f"Available Maps:\n{map_list_str}")
-    except FileNotFoundError:
-        await ctx.send("Map list file not found. Please ensure the map list is generated.")
+        # Second API call (TFCStats)
+        tfcstats_command = [
+            'curl', '-X', 'POST',
+            '-F', f'logs[]=@{logToParse1}',
+            '-F', f'logs[]=@{logToParse2}',
+            'https://www.tfcstats.com/api/parsePickup'
+        ]
 
-# Command to search for a specific map
-@client.command(pass_context=True)
-async def mapsearch(ctx, map_name):
-    try:
-        with open('map_list.json', 'r') as f:
-            maps = json.load(f)
-        map_name = map_name.lower() + ".bsp"
-        if map_name in maps:
-            await ctx.send(f"Found map: {map_name}")
-        else:
-            await ctx.send("Didn't find specified map.")
-    except FileNotFoundError:
-        await ctx.send("Map list file not found. Please ensure the map list is generated.")
+        try:
+            # Run first API call
+            hampalyzer_result = subprocess.run(hampalyzer_command, capture_output=True, text=True, check=True)
+            hampalyzer_response = json.loads(hampalyzer_result.stdout.strip())
 
-### End sd3mon input
+            # Run second API call
+            tfcstats_result = subprocess.run(tfcstats_command, capture_output=True, text=True, check=True)
+            tfcstats_response = json.loads(tfcstats_result.stdout.strip())
+
+            # Extract URLs from responses
+            hampalyzer_url = f"http://app.hampalyzer.com{hampalyzer_response['success']['path']}" if 'success' in hampalyzer_response and 'path' in hampalyzer_response['success'] else None
+            tfcstats_url = tfcstats_response['success']['path'] if 'success' in tfcstats_response and 'path' in tfcstats_response['success'] else None
+            # Send the links in Discord
+            message = "Parsed Logs:\n"
+            if hampalyzer_url:
+                message += f"📌 Hampalyzer: {hampalyzer_url}\n"
+            else:
+                message += "❌ Hampalyzer API failed.\n"
+
+            if tfcstats_url:
+                message += f"📌 TFCStats: {tfcstats_url}\n"
+            else:
+                message += "❌ TFCStats API failed.\n"
+
+            await ctx.send(message)
+
+        except subprocess.CalledProcessError as e:
+            await ctx.send(f"❌ Error while calling APIs: {e}")
+    else:
+        await ctx.send("⚠️ Not enough recent large log files found.")
 
 @client.command(pass_context=True)
 async def server(ctx):
-    await ctx.send("steam://connect/" + SERVER_IP + ":27015/%s" % SERVER_PASSWORD)
+    await ctx.send("connect " + SERVER_IP + "; password " + SERVER_PASSWORD)
 
 @client.command(pass_context=True)
 async def help(ctx):
-    await ctx.send("pickup: !pickup !add !remove !teams !lockmap !cancel")
-    await ctx.send("info: !stats !timeleft !hltv !logs !tfcmap !server")
     await ctx.send("tfc server info: !listmaps !mapsearch <name>")
-    await ctx.send("admin: !playernumber !kick !lockset !forcestats !vote")
+    await ctx.send("!logs")
+    await ctx.send("!entomb")
+    await ctx.send("!boysouttonight")
+    await ctx.send("!pickup !playernumber !add !remove !lockmap")
+
+@client.command(pass_context=True)
+async def entomb(ctx):
+    await ctx.send("https://youtu.be/v3VqaATiNm0?si=3vdafgy5PxVcNu6C")
 
 @client.event
 async def on_ready():
     print(f'{client.user} is aliiiiiive!')
 
+@client.command(pass_context=True)
+async def mvp(ctx):
+    await ctx.send("https://tenor.com/view/mvp-montel-vontavious-porter-entrance-wwe-smack-down-gif-18167076")
+
+@client.command(pass_context=True)
+async def boysouttonight(ctx):
+    await ctx.send("https://tenor.com/view/boys-outtinigh-gif-19208350")
+
+@client.command(pass_context=True)
+async def fulllogs(ctx):
+    global previous_files
+
+    # Find recent log files
+    recent_logs = find_recent_large_logs(log_directory)
+
+    if len(recent_logs) < 2:
+        await ctx.send("Not enough recent large log files found.")
+        return
+
+    logToParse1, logToParse2 = recent_logs[:2]
+
+    # Construct the cURL command for TFCStats
+    curl_command = [
+        'curl',
+        '-X', 'POST',
+        '-F', f'logs[]=@{logToParse1}',
+        '-F', f'logs[]=@{logToParse2}',
+        'https://www.tfcstats.com/api/parsePickup'
+    ]
+
+    try:
+        result = subprocess.run(curl_command, capture_output=True, text=True, check=True)
+        response_data = result.stdout.strip()
+
+        # Attempt to parse JSON
+        parsed_response = json.loads(response_data)
+
+        # Send the full JSON response (formatted)
+        response_text = json.dumps(parsed_response, indent=4)  # Pretty print JSON
+        if len(response_text) > 2000:  # Discord message character limit
+            await ctx.send("Response too long, sending as a file.")
+            with open("response.json", "w") as f:
+                f.write(response_text)
+            await ctx.send(file=discord.File("response.json"))
+        else:
+            await ctx.send(f"```json\n{response_text}\n```")
+
+    except subprocess.CalledProcessError as e:
+        await ctx.send(f"Error: {e}")
+    except json.JSONDecodeError:
+        await ctx.send(f"Invalid JSON response:\n{response_data}")
+
+@client.command(pass_context=True)
+async def tfcstatslogs(ctx):
+    global previous_files
+
+    await ctx.send("Fetching logs, please wait...")
+
+    # Find recent log files
+    recent_logs = find_recent_large_logs(log_directory)
+
+    if len(recent_logs) < 2:
+        await ctx.send("Not enough recent large log files found.")
+        return
+
+    logToParse1, logToParse2 = recent_logs[:2]
+
+    # API URL
+    api_url = "https://www.tfcstats.com/api/parsePickup"
+
+    # Send logs to API
+    async with aiohttp.ClientSession() as session:
+        data = aiohttp.FormData()
+        data.add_field("logs[]", open(logToParse1, "rb"))
+        data.add_field("logs[]", open(logToParse2, "rb"))
+
+        async with session.post(api_url, data=data) as response:
+            if response.status != 200:
+                await ctx.send(f"API Error: {response.status}")
+                return
+
+            response_data = await response.json()
+
+    success = response_data.get("success", {})
+    map_name = success.get("map", {}).get("name", "Unknown Map")
+    score = success.get("score", ["?", "?"])
+    match_link = success.get("path", "No link available")
+
+    # Extracting top 3 players
+    top3 = success.get("awards", {}).get("top3", [])
+    medals = ["🥇", "🥈", "🥉"]
+    top_players_text = " ".join(f"{medals[i]} {p['playerName']}" for i, p in enumerate(top3) if i < 3)
+
+    # Extracting notable stats
+    stats_fields = {
+        "airshots": "Airshots",
+        "concKills": "Conc'd Kills",
+        "damage": "Damage",
+        "flagCarrierKills": "Flag Carrier Kills",
+        "flagTouches": "Flag Touches",
+        "sgKills": "SG Kills",
+        "coastToCoast": "Coast to Coast"
+    }
+
+    notable_text = "\n".join(
+        f"🎖️ {stat['playerName']} | {stat['value']} {label}"
+        for key, label in stats_fields.items()
+        if (stat := success.get("awards", {}).get(key))
+    )
+
+    # Construct the summary message
+    summary_message = f"""
+**{map_name}**
+🟢 {score[0]} - {score[1]} 🟣
+
+{top_players_text}
+
+{notable_text}
+🔗 {match_link}
+"""
+
+    await ctx.send(summary_message)
+
+@client.command(pass_context=True)
+async def logs(ctx):
+    global previous_files
+
+    await ctx.send("Fetching logs, please wait...")
+
+    # Find recent log files
+    recent_logs = find_recent_large_logs(log_directory)
+
+    if len(recent_logs) < 2:
+        await ctx.send("Not enough recent large log files found.")
+        return
+
+    logToParse1, logToParse2 = recent_logs[:2]
+
+    tfcstats_api_url = "https://www.tfcstats.com/api/parsePickup"
+    hampalyzer_api_url = "http://app.hampalyzer.com/api/parseGame"
+
+    async with aiohttp.ClientSession() as session:
+        # Sending logs to **Hampalyzer**
+        hampalyzer_data = aiohttp.FormData()
+        hampalyzer_data.add_field("force", "on")
+        hampalyzer_data.add_field("logs[]", open(logToParse1, "rb"))
+        hampalyzer_data.add_field("logs[]", open(logToParse2, "rb"))
+
+        async with session.post(hampalyzer_api_url, data=hampalyzer_data) as hampalyzer_response:
+            if hampalyzer_response.status == 200:
+                hampalyzer_data = await hampalyzer_response.json()
+                hampalyzer_url = f"http://app.hampalyzer.com{hampalyzer_data['success']['path']}" if 'success' in hampalyzer_data and 'path' in hampalyzer_data['success'] else None
+            else:
+                hampalyzer_url = None
+
+        # Sending logs to **TFCStats**
+        tfcstats_data = aiohttp.FormData()
+        tfcstats_data.add_field("logs[]", open(logToParse1, "rb"))
+        tfcstats_data.add_field("logs[]", open(logToParse2, "rb"))
+
+        async with session.post(tfcstats_api_url, data=tfcstats_data) as response:
+            if response.status != 200:
+                await ctx.send(f"API Error: {response.status}")
+                return
+
+            response_data = await response.json()
+
+    success = response_data.get("success", {})
+    map_name = success.get("map", {}).get("name", "Unknown Map")
+    score = success.get("score", ["?", "?"])
+    match_link = success.get("path", "No link available")
+
+    # Extracting top 3 players
+    top3 = success.get("awards", {}).get("top3", [])
+    medals = ["🥇", "🥈", "🥉"]
+    top_players_text = " ".join(f"{medals[i]} {p['playerName']}" for i, p in enumerate(top3) if i < 3)
+
+    # Extracting notable stats
+    stats_fields = {
+        "airshots": "Airshots",
+        "concKills": "Conc'd Kills",
+        "damage": "Damage",
+        "flagCarrierKills": "Flag Carrier Kills",
+        "flagTouches": "Flag Touches",
+        "sgKills": "SG Kills",
+        "coastToCoast": "Coast to Coast"
+    }
+
+    notable_text = "\n".join(
+        f"🎖️  {stat['playerName']} | {stat['value']} {label}"
+        for key, label in stats_fields.items()
+        if (stat := success.get("awards", {}).get(key))
+    )
+
+    # Construct the summary message
+    summary_message = f"""
+**{map_name}**
+🟢 {score[0]} - {score[1]} 🟣
+
+{top_players_text}
+
+{notable_text}
+
+🔗 TFCStats: {match_link}
+"""
+
+    # Add Hampalyzer link if available
+    if hampalyzer_url:
+        summary_message += f"\n📌 Hampalyzer: {hampalyzer_url}"
+
+    await ctx.send(summary_message)
 
 client.run(TOKEN)

@@ -5,7 +5,9 @@
         "raiden8",
         "schtop",
         "shutdown2_lg2",
-        "stowaway2_lg"
+        "stowaway2_lg",
+	"turmoil_b5",
+	"nyoom"
     ],
     "tier2": [
         "alchimy_lg",
@@ -14,7 +16,8 @@
         "openfire_lowgrens",
         "siden_lg",
         "siege",
-        "stormz2_lg"
+        "stormz2_lg",
+	"hectic_b2"
     ],
     "tier3": [
         "2kfort5_lg",

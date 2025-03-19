@@ -1,0 +1,85 @@
+{
+    "success": {
+        "path": "https://www.tfcstats.com/pickup/oz-tfc-4v4-vultr-raiden8-mar-19-2025",
+        "pickupId": 1140,
+        "type": "4v4",
+        "score": [
+            96,
+            60
+        ],
+        "awards": {
+            "top3": [
+                {
+                    "playerId": 109,
+                    "playerName": "Spector",
+                    "steamId": "0:1:529863",
+                    "points": 13.4
+                },
+                {
+                    "playerId": 104,
+                    "playerName": "Kermie",
+                    "steamId": "0:0:16450748",
+                    "points": 12.574000000000002
+                },
+                {
+                    "playerId": 114,
+                    "playerName": "RealDeal",
+                    "steamId": "0:0:755519",
+                    "points": 11.155999999999999
+                }
+            ],
+            "airshots": null,
+            "concKills": {
+                "playerId": 109,
+                "playerName": "Spector",
+                "steamId": "0:1:10653",
+                "value": 8
+            },
+            "damage": {
+                "playerId": 104,
+                "playerName": "Kermie",
+                "steamId": "0:1:10653",
+                "value": 8048
+            },
+            "flagCarrierKills": {
+                "playerId": 116,
+                "playerName": "entomb raider",
+                "steamId": "0:1:10653",
+                "value": 10
+            },
+            "flagTouches": {
+                "playerId": 104,
+                "playerName": "Kermie",
+                "steamId": "0:1:10653",
+                "value": 15
+            },
+            "kills": {
+                "playerId": 109,
+                "playerName": "Spector",
+                "steamId": "0:1:10653",
+                "value": 40
+            },
+            "initialFlagTouches": {
+                "playerId": 109,
+                "playerName": "Spector",
+                "steamId": "0:1:10653",
+                "value": 5
+            },
+            "sgKills": {
+                "playerId": 116,
+                "playerName": "entomb raider",
+                "steamId": "0:1:10653",
+                "value": 11
+            },
+            "coastToCoast": {
+                "playerId": 109,
+                "playerName": "Spector",
+                "steamId": "0:1:10653",
+                "value": 3
+            }
+        },
+        "map": {
+            "name": "raiden8"
+        }
+    }
+}

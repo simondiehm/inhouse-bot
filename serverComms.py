@@ -38,7 +38,9 @@ def main():
     main_watcher()
 
 def getLastGameLogs():
-    logs_directory = '/home/steam/Steam/steamapps/common/Half-Life/tfc/logs/' # Set the path to your local logs directory
+    global FTP_USER
+    global FTP_PASSWD
+    global FTP_SERVER
 
     if os.path.exists('prevlog.json'):
         with open('prevlog.json', 'r') as f:
@@ -46,39 +48,43 @@ def getLastGameLogs():
     else:
         prevlog = []
 
-    # Get list of log files sorted by modification time in descending order
-    logFiles = sorted(
-        [f for f in os.listdir(logs_directory) if f.endswith('.log')],
-        key=lambda x: os.path.getmtime(os.path.join(logs_directory, x)),
-        reverse=True
-    )
+    ftp = FTP(FTP_SERVER, user=FTP_USER, passwd=FTP_PASSWD)
+    ftp.cwd('/tfc/logs')
+    logFiles = ftp.nlst('-t') # get list of logs by time
+    logFiles.reverse() # sort descending
 
     firstLog = None
     secondLog = None
     for logFile in logFiles:
-        logFilePath = os.path.join(logs_directory, logFile)
+        if ".log" not in logFile:
+            continue
+
         if 'logFiles' in prevlog and logFile in prevlog['logFiles']:
             print("already parsed the latest log")
             return
 
-        # Check the size, should be >100kB
-        if os.path.getsize(logFilePath) > 100000:
-            logModified = datetime.fromtimestamp(os.path.getmtime(logFilePath))
+        # check the size, should be >100kB
+        if int(ftp.size(logFile)) > 100000:
+            logModified = datetime.strptime(ftp.voidcmd("MDTM %s" % logFile).split()[-1], '%Y%m%d%H%M%S')
             if firstLog is None:
                 firstLog = (logFile, logModified)
                 continue
 
-            # Verify that there was another round played at least <60 minutes within the last found log
+            # otherwise, verify that there was another round played at least <60 minutes within the last found log
             if (firstLog[1] - logModified).total_seconds() < 3600:
                 secondLog = (logFile, logModified)
+
+            # if secondLog is not populated, this is probably the first pickup of the day; abort
             break
 
-    # Abort if we didn't find a log
+    # abort if we didn't find a log
     if firstLog is None or secondLog is None:
         return
 
-    # Assuming hampalyze API still needs the files to be sent
-    hampalyze = 'curl -X POST -F logs[]=@%s -F logs[]=@%s http://app.hampalyzer.com/api/parseGame' % (os.path.join(logs_directory, secondLog[0]), os.path.join(logs_directory, firstLog[0]))
+    ftp.retrbinary("RETR %s" % firstLog[0], open('logs/%s' % firstLog[0], 'wb').write)
+    ftp.retrbinary("RETR %s" % secondLog[0], open('logs/%s' % secondLog[0], 'wb').write)
+
+    hampalyze = 'curl -X POST -F logs[]=@%s -F logs[]=@%s http://app.hampalyzer.com/api/parseGame' % ('logs/'+secondLog[0], 'logs/'+firstLog[0])
     output = os.popen(hampalyze).read()
     print(output)
 
@@ -143,24 +149,3 @@ class InhouseServerProtocol:
 
 if __name__ == "__main__":
     main()
-
-async def periodic_task():
-    while True:
-        getLastGameLogs()  # Call your function
-        await asyncio.sleep(3600)  # Wait for 1 hour (3600 seconds) before next execution
-
-def main_watcher():
-    loop = asyncio.get_event_loop()
-    coro = start_udp_listener()
-    transport, _ = loop.run_until_complete(coro)
-    
-    # Schedule the periodic task
-    loop.create_task(periodic_task())
-
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        transport.close()
-        loop.close()
