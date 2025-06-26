@@ -24,7 +24,7 @@ intents.message_content = True
 client = commands.Bot(command_prefix = ["!", "+", "-"], help_command=None, case_insensitive=True, intents=intents)
 
 load_dotenv()
-DISCORD_TOKEN="removed"
+DISCORD_TOKEN=""
 TOKEN = DISCORD_TOKEN
 #TOKEN = os.getenv('DISCORD_TOKEN')
 #CHANNEL_NAME = os.getenv('DISCORD_CHANNEL')
@@ -40,7 +40,7 @@ CLIENT_PORT = os.getenv('CLIENT_PORT') # port to communicate with client plugin 
 # on load, load previous teams + map from the prev* files
 if os.path.exists('prevmaps.json'):
     with open('prevmaps.json', 'r') as f:
-        previousMaps = deque(json.load(f), maxlen=7)
+        previousMaps = deque(json.load(f), maxlen=5)
 else:
     previousMaps = []
 
@@ -88,9 +88,11 @@ class MapChoiceView(discord.ui.View):
         self.addButtons()
 
     def addButtons(self):
-        global emoji
+        default_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣"]
+        emoji_symbols = default_emojis[:len(mapChoices)]
+    
         for idx, mapChoice in enumerate(mapChoices):
-            self.add_item(self.createButton(label=f"{emoji[idx]} {mapChoice.mapName}", custom_id=f"{idx + 1}"))
+            self.add_item(self.createButton(label=f"{emoji_symbols[idx]} {mapChoice.mapName}", custom_id=f"{idx + 1}"))
 
     def createButton(self, label, custom_id):
         button = discord.ui.Button(label=label, custom_id=custom_id)
@@ -280,6 +282,12 @@ def GenerateMapVoteEmbed():
     global mapChoices
     global recentlyPlayedMapsMsg
 
+    if len(emoji) < len(mapChoices):
+        print(f"[WARNING] emoji list too short: {len(emoji)} < {len(mapChoices)}")
+
+    default_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣"]
+    emoji_symbols = default_emojis[:len(mapChoices)]
+
     embed = discord.Embed(
         title="Vote for your map!",
         description=f"When vote is stable, !lockmap",
@@ -303,7 +311,13 @@ def GenerateMapVoteEmbed():
         else:
             voteCountString = "%d votes" % (numVotes)
 
-        embed.add_field(name="", value=emoji[i] + " `" + mapName + " " + decoration + (" " * (25 - len(mapName) - 2 * len(decoration))) + voteCountString + "`\n\u200B" + whoVotedString, inline=False)
+        emoji_symbol = emoji_symbols[i]
+        embed.add_field(
+        name="",
+        value=emoji_symbol + " `" + mapName + " " + decoration + 
+          (" " * (25 - len(mapName) - 2 * len(decoration))) + voteCountString + "`\n\u200B" + whoVotedString,
+        inline=False
+        )
 
     if recentlyPlayedMapsMsg != None:
         embed.add_field(name="", value=recentlyPlayedMapsMsg, inline=False)
@@ -662,7 +676,7 @@ async def server(ctx):
 async def help(ctx):
     await ctx.send("tfc server info: !listmaps !mapsearch <name>")
     await ctx.send("!logs")
-    await ctx.send("!entomb")
+    await ctx.send("!entomb !schtop")
     await ctx.send("!boysouttonight")
     await ctx.send("!pickup !playernumber !add !remove !lockmap")
 
@@ -670,9 +684,18 @@ async def help(ctx):
 async def entomb(ctx):
     await ctx.send("https://youtu.be/v3VqaATiNm0?si=3vdafgy5PxVcNu6C")
 
+@client.command(pass_context=True)
+async def schtop(ctx):
+    await ctx.send("https://cdn.discordapp.com/attachments/1121809844916203520/1145367851914514492/image.png?ex=67da2f2f&is=67d8ddaf&hm=469da226878d3d8dd0300cc314938b63778b3ca0264637bce1f75e7955933aad&")
+
 @client.event
 async def on_ready():
     print(f'{client.user} is aliiiiiive!')
+
+
+@client.command(pass_context=True)
+async def max(ctx):
+    await ctx.send("https://tenor.com/view/crash-verstappen-verstappen-crash-gif-24527805")
 
 @client.command(pass_context=True)
 async def mvp(ctx):
