@@ -1,38 +1,32 @@
 {
     "tier1": [
+        "demolish2_b4r",
         "fry_baked_lg",
         "phantom_lg",
-        "raiden8",
+        "raiden9",
         "schtop",
         "shutdown2_lg2",
-        "stowaway2_lg",
-	"turmoil_b5",
-	"nyoom"
+        "stowaway2_lg2"
     ],
     "tier2": [
         "alchimy_lg",
-        "demolish",
         "entomb_b10",
+        "monkey_lg",
         "openfire_lowgrens",
         "siden_lg",
         "siege",
-        "stormz2_lg",
-	"hectic_b2"
+        "stormz2_lg"
     ],
     "tier3": [
-        "2kfort5_lg",
-        "2mesa3_lg",
-        "ameliorate",
+        "brutalist_b6",
         "cranked",
-        "datchurch",
-        "monkey_lg",
+        "datchurch_lg",
         "mortality_lg",
-        "nyx_rb2",
-        "opposition3",
-        "orbit_l3",
+        "orbit_tfp",
+        "mortality_c_b3",
+        "waterwar_lg",
         "serenity_r",
-        "turbowave_b1",
-        "voltage_lg",
-        "waterwar"
+        "spaceape_b13",
+        "voltage_lg"
     ]
 }
